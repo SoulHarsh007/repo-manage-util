@@ -47,7 +47,10 @@ fn init_profile_repo(repo_filepath: &str) -> Result<Alpm> {
     init_alpm(&temp_dir, &repo_list)
 }
 
-pub fn exclude_existing_pkgs(repo_db_path: &str, pkgs: &mut pkg_utils::PackageMap) -> Result<Vec<String>> {
+pub fn exclude_existing_pkgs(
+    repo_db_path: &str,
+    pkgs: &mut pkg_utils::PackageMap,
+) -> Result<Vec<String>> {
     // we iterate through DB with alpm crate, and check for each package
     // if the package exist in the repo and is newer or equal to the one
     // in the list, then we remove it from the list of packages

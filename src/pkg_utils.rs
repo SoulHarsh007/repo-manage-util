@@ -341,13 +341,11 @@ mod tests {
         ];
         let pkg_version_slice = get_stale_pkg_versions(&pkgs_list, 2);
 
-        let expected_version_slice: PackageMap = HashMap::from([(
-            "cachyos-cli-installer-new".to_string(),
-            vec![(
+        let expected_version_slice: PackageMap =
+            HashMap::from([("cachyos-cli-installer-new".to_string(), vec![(
                 "local_repo/x86_64/cachyos-cli-installer-new-0.7.0-1-x86_64.pkg.tar.zst".into(),
                 alpm::Version::new("0.7.0-1"),
-            )],
-        )]);
+            )])]);
 
         assert_eq!(pkg_version_slice, expected_version_slice);
 
@@ -355,18 +353,12 @@ mod tests {
             get_stale_pkg_versions(&pkgs_list, 1).into_iter().collect::<Vec<_>>();
         pkg_version_slice.sort_by(|a, b| a.0.cmp(&b.0));
 
-        let expected_version_slice =
-            vec![
-                (
-                    "bcachefs-tools".to_string(),
-                    vec![(
-                        "local_repo/x86_64/bcachefs-tools-3:1.11.0-1.1-x86_64.pkg.tar.zst".into(),
-                        alpm::Version::new("3:1.11.0-1.1"),
-                    )],
-                ),
-                (
-                    "cachyos-cli-installer-new".to_string(),
-                    vec![
+        let expected_version_slice = vec![
+            ("bcachefs-tools".to_string(), vec![(
+                "local_repo/x86_64/bcachefs-tools-3:1.11.0-1.1-x86_64.pkg.tar.zst".into(),
+                alpm::Version::new("3:1.11.0-1.1"),
+            )]),
+            ("cachyos-cli-installer-new".to_string(), vec![
                 (
                     "local_repo/x86_64/cachyos-cli-installer-new-0.7.0-1-x86_64.pkg.tar.zst".into(),
                     alpm::Version::new("0.7.0-1"),
@@ -375,9 +367,8 @@ mod tests {
                     "local_repo/x86_64/cachyos-cli-installer-new-0.7.0-2-x86_64.pkg.tar.zst".into(),
                     alpm::Version::new("0.7.0-2"),
                 ),
-            ],
-                ),
-            ];
+            ]),
+        ];
 
         assert_eq!(pkg_version_slice, expected_version_slice);
     }
