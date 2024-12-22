@@ -39,6 +39,29 @@ pub fn get_outdated_pkgs(pkg_list: &[String]) -> Vec<String> {
     outdated_pkgs
 }
 
+// Invalidate packages if they are without signatures
+pub fn validate_packages(require_signature: bool, pkg_list: &[String]) -> bool {
+    let mut invalid_pkgs: Vec<String> = vec![];
+    for pkg in pkg_list {
+        // check for signature if we require it
+        if require_signature && !Path::new(&format!("{pkg}.sig")).exists() {
+            let pkg_db_entry = get_pkg_db_pair_from_path(pkg);
+            log::error!("Found package without required signature: '{pkg_db_entry}'");
+            invalid_pkgs.push(pkg.clone());
+        }
+    }
+    invalid_pkgs.is_empty()
+}
+
+// Returns found packages in the provided path
+pub fn find_packages_in_dir(source_dir: &Path) -> anyhow::Result<Vec<String>> {
+    let found_pkg_list = glob::glob(&format!("{}/*.pkg.tar.zst", source_dir.to_str().unwrap()))?
+        .map(|x| x.unwrap().to_str().unwrap().to_owned())
+        .collect::<Vec<_>>();
+
+    Ok(found_pkg_list)
+}
+
 // Remove outdated packages from pkg_list
 pub fn remove_outdated_pkgs(pkg_list: &mut Vec<String>) {
     let outdated_pkgs = get_outdated_pkgs(pkg_list);
@@ -182,6 +205,7 @@ pub fn exclude_existing_pkgs(repo_db_path: &str, pkg_list: &[String]) -> Vec<Str
 #[cfg(test)]
 mod tests {
     use crate::pkg_utils::*;
+    use std::fs;
 
     #[test]
     fn test_pkgver_from_filename() {
@@ -566,5 +590,100 @@ mod tests {
         ];
 
         assert_eq!(replace_base_dir_for_pkgs(&pkgs_list, base_dir), expected_pkgs_list);
+    }
+
+    #[test]
+    fn test_validate_packages_no_signature_required() {
+        let pkgs_list: Vec<String> = vec![
+            "local_repo/x86_64/bcachefs-tools-3:1.11.0-1.1-x86_64.pkg.tar.zst".into(),
+            "local_repo/x86_64/cachyos-cli-installer-new-0.7.0-3-x86_64.pkg.tar.zst".into(),
+            "local_repo/x86_64/dolt-1.30.4-1.1-x86_64.pkg.tar.zst".into(),
+            "local_repo/x86_64/dwl-git-0.2.1.r34.2d9740c-1-x86_64.pkg.tar.zst".into(),
+            "local_repo/x86_64/dwm-6.2-4-x86_64.pkg.tar.zst".into(),
+            "local_repo/x86_64/lightdm-webkit2-theme-arch-1:0.1-1-any.pkg.tar.zst".into(),
+            "local_repo/x86_64/plymouth-theme-hud-3-git-r38.bf2f570-1-any.pkg.tar.zst".into(),
+            "local_repo/x86_64/st-0.8.4-2-x86_64.pkg.tar.zst".into(),
+        ];
+        assert!(validate_packages(false, &pkgs_list));
+    }
+
+    #[test]
+    fn test_validate_packages_all_signatures_present() {
+        let temp_dir = utils::create_temporary_directory(None).expect("Failed to create temp dir");
+
+        let pkgs_list: Vec<String> = vec![
+            format!("{temp_dir}/lightdm-webkit2-theme-arch-1:0.1-1-any.pkg.tar.zst"),
+            format!("{temp_dir}/plymouth-theme-hud-3-git-r38.bf2f570-1-any.pkg.tar.zst"),
+            format!("{temp_dir}/st-0.8.4-2-x86_64.pkg.tar.zst"),
+        ];
+        for pkg in &pkgs_list {
+            fs::File::create(&pkg).unwrap();
+            fs::File::create(&format!("{pkg}.sig")).unwrap();
+        }
+        assert!(validate_packages(true, &pkgs_list));
+
+        fs::remove_dir_all(temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_validate_packages_missing_signature() {
+        let temp_dir = utils::create_temporary_directory(None).expect("Failed to create temp dir");
+
+        let pkgs_list: Vec<String> = vec![
+            format!("{temp_dir}/lightdm-webkit2-theme-arch-1:0.1-1-any.pkg.tar.zst"),
+            format!("{temp_dir}/plymouth-theme-hud-3-git-r38.bf2f570-1-any.pkg.tar.zst"),
+            format!("{temp_dir}/st-0.8.4-2-x86_64.pkg.tar.zst"),
+        ];
+        for pkg in &pkgs_list {
+            fs::File::create(&pkg).unwrap();
+        }
+        assert!(!validate_packages(true, &pkgs_list));
+
+        fs::remove_dir_all(temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_validate_packages_empty_package_list() {
+        let pkgs_list: Vec<String> = vec![];
+        assert!(validate_packages(true, &pkgs_list));
+        assert!(validate_packages(false, &pkgs_list));
+    }
+
+    #[test]
+    fn test_validate_packages_mixed_signature_status() {
+        let temp_dir = utils::create_temporary_directory(None).expect("Failed to create temp dir");
+
+        let pkgs_list: Vec<String> = vec![
+            format!("{temp_dir}/lightdm-webkit2-theme-arch-1:0.1-1-any.pkg.tar.zst"),
+            format!("{temp_dir}/plymouth-theme-hud-3-git-r38.bf2f570-1-any.pkg.tar.zst"),
+            format!("{temp_dir}/st-0.8.4-2-x86_64.pkg.tar.zst"),
+        ];
+        for pkg in &pkgs_list {
+            fs::File::create(&pkg).unwrap();
+        }
+        fs::File::create(&format!("{}.sig", &pkgs_list[0])).unwrap();
+        assert!(!validate_packages(true, &pkgs_list));
+
+        fs::remove_dir_all(temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_find_packages_in_dir_no_matching_packages() {
+        let temp_dir = utils::create_temporary_directory(None).expect("Failed to create temp dir");
+        let other_file = Path::new(&temp_dir).join("other.txt");
+        fs::File::create(other_file).unwrap();
+
+        let result = find_packages_in_dir(&Path::new(&temp_dir)).unwrap();
+        assert_eq!(result.len(), 0);
+
+        fs::remove_dir_all(temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_find_packages_in_dir_invalid_path() {
+        let invalid_path = Path::new("/this/path/does/not/exist");
+        let result = find_packages_in_dir(invalid_path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Vec::<String>::new());
     }
 }

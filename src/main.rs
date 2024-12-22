@@ -215,25 +215,13 @@ fn do_repo_move_pkgs(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
     let current_dir = std::env::current_dir().context("Failed to get current working dir")?;
 
     // here we get only packages without signature
-    let mut pkg_to_move_list =
-        glob::glob(&format!("{}/*.pkg.tar.zst", current_dir.to_str().unwrap()))?
-            .map(|x| x.unwrap().to_str().unwrap().to_owned())
-            .collect::<Vec<_>>();
+    let mut pkg_to_move_list = pkg_utils::find_packages_in_dir(current_dir.as_path())?;
 
     // NOTE: probably we would rather want here to see filenames instead of full paths
     log::info!("Found packages to move in current dir: {pkg_to_move_list:?}");
 
     // lets invalidate packages if they are without signatures
-    let mut invalid_pkgs: Vec<String> = vec![];
-    for pkg_to_move in &pkg_to_move_list {
-        // check for signature if we require it
-        if profile.require_signature && !Path::new(&format!("{pkg_to_move}.sig")).exists() {
-            let pkg_db_entry = pkg_utils::get_pkg_db_pair_from_path(pkg_to_move);
-            log::error!("Found package without required signature: '{pkg_db_entry}'");
-            invalid_pkgs.push(pkg_to_move.clone());
-        }
-    }
-    if !invalid_pkgs.is_empty() {
+    if !pkg_utils::validate_packages(profile.require_signature, &pkg_to_move_list) {
         log::error!("Aborting due to found 'invalid' packages. Cannot proceed further");
         return Ok(());
     }
@@ -450,25 +438,13 @@ fn move_packages_from_repo_to_repo(
     dest_repo_dir: &Path,
 ) -> Result<()> {
     // here we get only packages without signature
-    let pkg_to_move_list =
-        glob::glob(&format!("{}/*.pkg.tar.zst", src_repo_dir.to_str().unwrap()))?
-            .map(|x| x.unwrap().to_str().unwrap().to_owned())
-            .collect::<Vec<_>>();
+    let pkg_to_move_list = pkg_utils::find_packages_in_dir(src_repo_dir)?;
 
     // NOTE: probably we would rather want here to see filenames instead of full paths
     log::info!("Found packages to move in src dir: {pkg_to_move_list:?}");
 
     // lets invalidate packages if they are without signatures
-    let mut invalid_pkgs: Vec<String> = vec![];
-    for pkg_to_move in &pkg_to_move_list {
-        // check for signature if we require it
-        if dest_profile.require_signature && !Path::new(&format!("{pkg_to_move}.sig")).exists() {
-            let pkg_db_entry = pkg_utils::get_pkg_db_pair_from_path(pkg_to_move);
-            log::error!("Found package without required signature: '{pkg_db_entry}'");
-            invalid_pkgs.push(pkg_to_move.clone());
-        }
-    }
-    if !invalid_pkgs.is_empty() {
+    if !pkg_utils::validate_packages(dest_profile.require_signature, &pkg_to_move_list) {
         log::error!("Aborting due to found 'invalid' packages. Cannot proceed further");
         return Ok(());
     }
