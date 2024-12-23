@@ -617,8 +617,8 @@ mod tests {
             format!("{temp_dir}/st-0.8.4-2-x86_64.pkg.tar.zst"),
         ];
         for pkg in &pkgs_list {
-            fs::File::create(&pkg).unwrap();
-            fs::File::create(&format!("{pkg}.sig")).unwrap();
+            fs::File::create(pkg).unwrap();
+            fs::File::create(format!("{pkg}.sig")).unwrap();
         }
         assert!(validate_packages(true, &pkgs_list));
 
@@ -635,7 +635,7 @@ mod tests {
             format!("{temp_dir}/st-0.8.4-2-x86_64.pkg.tar.zst"),
         ];
         for pkg in &pkgs_list {
-            fs::File::create(&pkg).unwrap();
+            fs::File::create(pkg).unwrap();
         }
         assert!(!validate_packages(true, &pkgs_list));
 
@@ -659,9 +659,9 @@ mod tests {
             format!("{temp_dir}/st-0.8.4-2-x86_64.pkg.tar.zst"),
         ];
         for pkg in &pkgs_list {
-            fs::File::create(&pkg).unwrap();
+            fs::File::create(pkg).unwrap();
         }
-        fs::File::create(&format!("{}.sig", &pkgs_list[0])).unwrap();
+        fs::File::create(format!("{}.sig", &pkgs_list[0])).unwrap();
         assert!(!validate_packages(true, &pkgs_list));
 
         fs::remove_dir_all(temp_dir).unwrap();
@@ -673,7 +673,7 @@ mod tests {
         let other_file = Path::new(&temp_dir).join("other.txt");
         fs::File::create(other_file).unwrap();
 
-        let result = find_packages_in_dir(&Path::new(&temp_dir)).unwrap();
+        let result = find_packages_in_dir(Path::new(&temp_dir)).unwrap();
         assert_eq!(result.len(), 0);
 
         fs::remove_dir_all(temp_dir).unwrap();
