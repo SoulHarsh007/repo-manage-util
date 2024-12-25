@@ -14,29 +14,41 @@ use config::Profile;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+//#[clap(subcommand_negates_reqs = true)]
 struct Cli {
+    /// Profile to use from the configuration file
+    #[arg(global = true, short, long)]
+    profile: Option<String>,
+
+    /// Profile to use from the configuration file
+    #[arg(global = true, short, long)]
+    from: Option<String>,
+    /// Profile to use from the configuration file
+    #[arg(global = true, short, long)]
+    to: Option<String>,
+
     #[command(subcommand)]
     command: Commands,
 }
 
-#[derive(Args, Debug)]
+#[derive(Parser, Debug)]
 struct SingleProfileCli {
     /// Profile to use from the configuration file
-    #[arg(short, long)]
+    #[clap(from_global)]
     profile: String,
 }
 
-#[derive(Args, Debug)]
+#[derive(Parser, Debug)]
 struct FromToProfileCli {
     /// Profile to use from the configuration file (for move-pkgs) FROM repo
-    #[arg(short, long)]
+    #[clap(from_global)]
     from: String,
     /// Profile to use from the configuration file (for move-pkgs) TO repo
-    #[arg(short, long)]
+    #[clap(from_global)]
     to: String,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Parser, Debug)]
 enum Commands {
     /// Reset the repository
     Reset(SingleProfileCli),
