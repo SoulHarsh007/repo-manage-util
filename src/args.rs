@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::Parser;
 
 #[derive(Parser, PartialEq, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -63,14 +63,14 @@ mod tests {
 
     #[test]
     fn single_profile_check() {
-        assert_eq!(Cli::parse_from(&["test", "reset", "--profile", "abcd"]), Cli {
+        assert_eq!(Cli::parse_from(["test", "reset", "--profile", "abcd"]), Cli {
             profile: Some("abcd".to_owned()),
             to: None,
             from: None,
             command: Commands::Reset(SingleProfileCli { profile: "abcd".to_owned() })
         });
 
-        assert_eq!(Cli::parse_from(&["test", "--profile", "abcd", "reset"]), Cli {
+        assert_eq!(Cli::parse_from(["test", "--profile", "abcd", "reset"]), Cli {
             profile: Some("abcd".to_owned()),
             to: None,
             from: None,
@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn from_to_profile_check() {
         assert_eq!(
-            Cli::parse_from(&["test", "move-pkgs", "--to", "abcd", "--from", "dcba"]),
+            Cli::parse_from(["test", "move-pkgs", "--to", "abcd", "--from", "dcba"]),
             Cli {
                 profile: None,
                 to: Some("abcd".to_owned()),
@@ -94,7 +94,7 @@ mod tests {
         );
 
         assert_eq!(
-            Cli::parse_from(&["test", "--to", "abcd", "--from", "dcba", "move-pkgs"]),
+            Cli::parse_from(["test", "--to", "abcd", "--from", "dcba", "move-pkgs"]),
             Cli {
                 profile: None,
                 to: Some("abcd".to_owned()),
