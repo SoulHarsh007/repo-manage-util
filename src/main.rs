@@ -1,4 +1,5 @@
 mod alpm_helper;
+mod args;
 mod config;
 mod logger;
 mod pkg_utils;
@@ -9,63 +10,9 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use clap::{Args, Parser, Subcommand};
+use args::*;
+use clap::Parser;
 use config::Profile;
-
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-//#[clap(subcommand_negates_reqs = true)]
-struct Cli {
-    /// Profile to use from the configuration file
-    #[arg(global = true, short, long)]
-    profile: Option<String>,
-
-    /// Profile to use from the configuration file
-    #[arg(global = true, short, long)]
-    from: Option<String>,
-    /// Profile to use from the configuration file
-    #[arg(global = true, short, long)]
-    to: Option<String>,
-
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[derive(Parser, Debug)]
-struct SingleProfileCli {
-    /// Profile to use from the configuration file
-    #[clap(from_global)]
-    profile: String,
-}
-
-#[derive(Parser, Debug)]
-struct FromToProfileCli {
-    /// Profile to use from the configuration file (for move-pkgs) FROM repo
-    #[clap(from_global)]
-    from: String,
-    /// Profile to use from the configuration file (for move-pkgs) TO repo
-    #[clap(from_global)]
-    to: String,
-}
-
-#[derive(Parser, Debug)]
-enum Commands {
-    /// Reset the repository
-    Reset(SingleProfileCli),
-    /// Update the repository
-    Update(SingleProfileCli),
-    /// Moves packages from current directory into the repository
-    MovePkgsToRepo(SingleProfileCli),
-    /// Moves packages from one repository to another repository
-    MovePkgs(FromToProfileCli),
-    /// Check if the packages are up-to-date
-    IsPkgsUpToDate(SingleProfileCli),
-    /// Cleans up the backup directory,
-    /// removing the N amount of packages if configured to do so
-    CleanupBackupDir(SingleProfileCli),
-    // Check if we have only certain amount of debug packages in the debug repository
-    // IsDebugPkgsOk, // ok maybe not implemented
-}
 
 fn get_profile_from_config<'a>(
     profile_name: &'a str,
