@@ -97,9 +97,7 @@ fn do_repo_reset(profile: &config::Profile, repo_db_pattern: &str, repo_dir: &Pa
         }
     }
 
-    let mut pkgs_list = glob::glob(&format!("{}/*.pkg.tar.zst", repo_dir.to_str().unwrap()))?
-        .map(|x| x.unwrap().to_str().unwrap().to_owned())
-        .collect::<Vec<_>>();
+    let mut pkgs_list = pkg_utils::find_packages_in_dir(repo_dir)?;
     let outdated_pkgs = pkg_utils::get_outdated_pkgs(&pkgs_list);
     pkgs_list.retain(|pkg| !outdated_pkgs.contains(pkg));
 
@@ -120,9 +118,7 @@ fn do_repo_reset(profile: &config::Profile, repo_db_pattern: &str, repo_dir: &Pa
 }
 
 fn do_repo_update(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
-    let pkgs_list = glob::glob(&format!("{}/*.pkg.tar.zst", repo_dir.to_str().unwrap()))?
-        .map(|x| x.unwrap().to_str().unwrap().to_owned())
-        .collect::<Vec<_>>();
+    let pkgs_list = pkg_utils::find_packages_in_dir(repo_dir)?;
     let outdated_pkgs = pkg_utils::get_outdated_pkgs(&pkgs_list);
     let mut new_pkgs = pkg_utils::get_new_pkgs(&pkgs_list);
 
@@ -211,9 +207,8 @@ fn do_repo_move_pkgs(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
 }
 
 fn do_repo_checkup(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
-    let pkgs_list = glob::glob(&format!("{}/*.pkg.tar.zst", repo_dir.to_str().unwrap()))?
-        .map(|x| x.unwrap().to_str().unwrap().to_owned())
-        .collect::<Vec<_>>();
+    let pkgs_list = pkg_utils::find_packages_in_dir(repo_dir)?;
+
     let outdated_pkgs = pkg_utils::get_outdated_pkgs(&pkgs_list);
     let new_pkgs = pkg_utils::get_new_pkgs(&pkgs_list);
 
@@ -349,9 +344,8 @@ fn do_backup_repo_cleanup(profile: &config::Profile) -> Result<()> {
     }
 
     // lets get all packages in the repo it self and the debug repo folder
-    let pkgs_list = glob::glob(&format!("{}/*.pkg.tar.zst", profile.backup_dir.as_ref().unwrap()))?
-        .map(|x| x.unwrap().to_str().unwrap().to_owned())
-        .collect::<Vec<_>>();
+    let backup_dir = Path::new(profile.backup_dir.as_ref().unwrap());
+    let pkgs_list = pkg_utils::find_packages_in_dir(backup_dir)?;
 
     let mut pkg_map =
         pkg_utils::get_stale_pkg_versions(&pkgs_list, *profile.backup_num.as_ref().unwrap());
