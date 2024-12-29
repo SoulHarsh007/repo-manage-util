@@ -28,7 +28,6 @@ pub struct Profile {
     pub debug_dir: Option<String>,
     #[serde(default = "default_interactive")]
     pub interactive: bool,
-    // Add the reference_repo field
     pub reference_repo: Option<String>,
 }
 
@@ -105,7 +104,10 @@ mod tests {
                     backup_dir: Some("/home/testuser/backup_repos/repof".to_string()),
                     debug_dir: Some("/home/testuser/debug_repos/repof".to_string()),
                     interactive: false,
-                    reference_repo: None,
+                    reference_repo: Some(
+                        "/home/testanotheruser/repos/reposecond-super/reposecond-super.db.tar.zst"
+                            .to_string(),
+                    ),
                 }),
                 ("reposecond".to_string(), Profile {
                     repo: "/home/testuser/repos/x86_64/os/reposecond/reposecond.db.tar.zst"
@@ -118,7 +120,10 @@ mod tests {
                     backup_dir: Some("/home/testuser/backup_repos/reposecond".to_string()),
                     debug_dir: Some("/home/testuser/debug_repos/reposecond".to_string()),
                     interactive: false,
-                    reference_repo: None,
+                    reference_repo: Some(
+                        "/home/testanotheruser/repos/reposecond-super/reposecond-super.db.tar.zst"
+                            .to_string(),
+                    ),
                 }),
             ]),
         };

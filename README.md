@@ -6,6 +6,7 @@ A command-line utility for managing Arch Linux repositories.
 
 - **Reset:** Resets the repository database and removes outdated packages.
 - **Update:** Updates the repository database with new packages and removes stale packages.
+- **Sync:** Updates the repository database with newer packages from the reference repository database.
 - **MovePkgsToRepo:** Moves packages from the current directory to the repository.
 - **MovePkgs:** Moves packages from one repository to another repository.
 - **IsPkgsUpToDate:** Checks if the packages in the repository are up-to-date.
@@ -48,6 +49,7 @@ backup_dir = "/path/to/backup/dir"
 backup_num = 3  # Keep last 3 versions
 debug_dir = "/path/to/debug/dir"
 interactive = false
+reference_repo = "/ref/path/to/myrepo.db.tar.zst"
 ```
 
 **Explanation of the Example Configuration:**
@@ -62,6 +64,7 @@ interactive = false
 - **`backup_num = 3`**: This sets a limit on the number of versions to keep for each package in the backup directory. In this case, only the last 3 versions of each package will be kept.
 - **`debug_dir = "/path/to/debug/dir"`**: This option is used to specify a directory where debug packages should be stored.
 - **`interactive = false`**: This disables interactive mode. When disabled, the tool will not prompt for confirmation before performing actions.
+- **`reference_repo = "/ref/path/to/myrepo.db.tar.zst"`**: This specifies the path to the reference repository database file (the `.db.tar.zst` file).
 
 **Configuration Options:**
 
@@ -85,6 +88,7 @@ repo-manage-util --profile <PROFILE> [COMMAND]
 
 - **reset:** Resets the repository.
 - **update:** Updates the repository.
+- **sync:** Syncs repository with the reference repository.
 - **move-pkgs-to-repo:** Moves packages from the current directory to the repository.
 - **move-pkgs** Moves packages from one repository to another repository.
 - **is-pkgs-up-to-date:** Checks if the packages in the repository are up-to-date.

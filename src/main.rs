@@ -57,6 +57,14 @@ fn main() -> Result<()> {
             // TODO(vnepogodin): handle debug packages
             // move them to debug folder if is set
         },
+        Commands::Sync(args) => {
+            let profile = get_profile_from_config(&args.profile, &config)?;
+            let repo_dir = get_repo_dir_from_profile(profile);
+
+            do_repo_sync(profile, repo_dir)?;
+            // TODO(vnepogodin): handle debug packages
+            // move them to debug folder if is set
+        },
         Commands::MovePkgsToRepo(args) => {
             let profile = get_profile_from_config(&args.profile, &config)?;
             let repo_dir = get_repo_dir_from_profile(profile);
@@ -165,6 +173,47 @@ fn do_repo_update(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
     Ok(())
 }
 
+fn do_repo_sync(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
+    if profile.reference_repo.is_none() {
+        log::error!("Reference repository is not configured. Cannot proceed further");
+        return Ok(());
+    }
+
+    let reference_repo_path = profile.reference_repo.as_ref().unwrap();
+    let packages_to_copy =
+        alpm_helper::get_newer_packages_from_reference(&profile.repo, reference_repo_path)
+            .context("Failed to get newer packages from reference repo")?;
+
+    if !packages_to_copy.is_empty() {
+        // NOTE: probably we would rather want here to see filenames instead of full paths
+        log::info!("Found newer packages in ref repo: {packages_to_copy:?}");
+    }
+
+    // lets invalidate packages if they are without signatures
+    if !pkg_utils::validate_packages(profile.require_signature, &packages_to_copy) {
+        log::error!("Aborting due to found 'invalid' packages. Cannot proceed further");
+        return Ok(());
+    }
+
+    // Copy the packages to the profile repository directory
+    for package_path in &packages_to_copy {
+        let ref_pkg = pkg_utils::get_pkg_db_pair_from_path(package_path);
+        log::info!("ref repo: {ref_pkg}");
+
+        if let Err(pkg_copy_err) = handle_pkgfile_copy(package_path, repo_dir.to_str().unwrap()) {
+            log::error!("Error occurred while copying package files: {pkg_copy_err}");
+            return Ok(());
+        }
+    }
+
+    // TODO: handle new packages(which dont exist in repo, but exist in ref repo), handle stale
+    // packages(which no longer exist in ref repo)
+
+    log::info!("Repo ref sync is done!");
+
+    Ok(())
+}
+
 fn do_repo_move_pkgs(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
     // 1. moving packages from current dir
     let current_dir = std::env::current_dir().context("Failed to get current working dir")?;
@@ -261,26 +310,6 @@ fn do_repo_checkup(profile: &config::Profile, repo_dir: &Path) -> Result<()> {
                 .collect::<Vec<_>>();
             log::info!("Found new pkgs from ref repo '{repo_db_prefix}': {new_pkgname_list:?}");
         }
-
-        /*
-        // Copy the packages to the profile repository directory
-        let repo_dir = Path::new(&profile.repo).parent().unwrap();
-        for package_path in packages_to_copy {
-            let package_filename =
-                Path::new(&package_path).file_name().unwrap().to_str().unwrap();
-            let destination_path = repo_dir.join(package_filename);
-
-            log::info!("Copying package from reference repository: {}", package_filename);
-            fs::copy(&package_path, &destination_path)?;
-
-            // Copy the signature file as well
-            let signature_path = format!("{}.sig", package_path);
-            if Path::new(&signature_path).exists() {
-                let destination_signature_path =
-                    format!("{}.sig", destination_path.to_str().unwrap());
-                fs::copy(&signature_path, destination_signature_path)?;
-            }
-        }*/
     }
 
     log::info!("Repo checkup is done!");
@@ -456,6 +485,30 @@ fn handle_outdated_pkgs(profile: &config::Profile, outdated_pkgs: &[String]) -> 
     if profile.backup {
         // lets run just regular backup cleanup
         do_backup_repo_cleanup(profile)?;
+    }
+
+    Ok(())
+}
+
+fn handle_pkgfile_copy(pkg_to_copy: &str, dest_dir: &str) -> Result<()> {
+    let pkg_filename = Path::new(&pkg_to_copy).file_name().unwrap().to_str().unwrap();
+    let dest_path = format!("{}/{pkg_filename}", dest_dir);
+
+    // NOTE: maybe we should change log level depending on the func argument,
+    // we may not want to have it all time as info, for example at handling outdated packages
+    log::info!("Copying pkg from '{pkg_to_copy}' -> '{dest_path}'");
+
+    // copying package
+    if let Err(copy_err) = fs::copy(pkg_to_copy, &dest_path) {
+        anyhow::bail!("Failed to copy pkg: {copy_err}");
+    }
+    // copying package signature
+    let pkg_sig_to_copy = format!("{pkg_to_copy}.sig");
+    let sig_dest_path = format!("{dest_path}.sig");
+    if Path::new(&pkg_sig_to_copy).exists() {
+        if let Err(copy_err) = fs::copy(pkg_sig_to_copy, &sig_dest_path) {
+            log::error!("Failed to copy pkg signature: {copy_err}");
+        }
     }
 
     Ok(())

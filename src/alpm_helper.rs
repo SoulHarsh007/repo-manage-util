@@ -238,7 +238,7 @@ pub fn get_newer_packages_from_reference(
 
                     // skip if the package file doesn't exist in the reference repo
                     if !Path::new(&pkgfile_path).exists() {
-                        log::error!("Package file doesn't in ref repo: {pkgfile_path}");
+                        log::error!("Package file doesn't exist in ref repo: {pkgfile_path}");
                         continue;
                     }
                     packages_to_copy.push(pkgfile_path);

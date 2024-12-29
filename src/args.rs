@@ -42,6 +42,8 @@ pub(crate) enum Commands {
     Reset(SingleProfileCli),
     /// Update the repository
     Update(SingleProfileCli),
+    /// Sync repository with the reference repository
+    Sync(SingleProfileCli),
     /// Moves packages from current directory into the repository
     MovePkgsToRepo(SingleProfileCli),
     /// Moves packages from one repository to another repository

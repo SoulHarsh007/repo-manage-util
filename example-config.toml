@@ -47,8 +47,7 @@
 
   # reference repo is the full path to the local repo to compare our profile repo against,
   # copies packages from in case update available
-  # TODO: implement such functionality
-  #reference_repo = "/home/testanotheruser/repos/reposecond-super/reposecond-super.db.tar.zst"
+  reference_repo = "/home/testanotheruser/repos/reposecond-super/reposecond-super.db.tar.zst"
 
 [profiles.reposecond]
   # repo is the full path to the repository that will be managed by repoctl.
@@ -97,5 +96,4 @@
 
   # reference repo is the full path to the local repo to compare our profile repo against,
   # copies packages from in case update available
-  # TODO: implement such functionality
-  #reference_repo = "/home/testanotheruser/repos/reposecond-super/reposecond-super.db.tar.zst"
+  reference_repo = "/home/testanotheruser/repos/reposecond-super/reposecond-super.db.tar.zst"
