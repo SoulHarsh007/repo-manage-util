@@ -80,30 +80,24 @@ mod tests {
 
     #[test]
     fn from_to_profile_check() {
-        assert_eq!(
-            Cli::parse_from(["test", "move-pkgs", "--to", "abcd", "--from", "dcba"]),
-            Cli {
-                profile: None,
-                to: Some("abcd".to_owned()),
-                from: Some("dcba".to_owned()),
-                command: Commands::MovePkgs(FromToProfileCli {
-                    to: "abcd".to_owned(),
-                    from: "dcba".to_owned()
-                })
-            }
-        );
+        assert_eq!(Cli::parse_from(["test", "move-pkgs", "--to", "abcd", "--from", "dcba"]), Cli {
+            profile: None,
+            to: Some("abcd".to_owned()),
+            from: Some("dcba".to_owned()),
+            command: Commands::MovePkgs(FromToProfileCli {
+                to: "abcd".to_owned(),
+                from: "dcba".to_owned()
+            })
+        });
 
-        assert_eq!(
-            Cli::parse_from(["test", "--to", "abcd", "--from", "dcba", "move-pkgs"]),
-            Cli {
-                profile: None,
-                to: Some("abcd".to_owned()),
-                from: Some("dcba".to_owned()),
-                command: Commands::MovePkgs(FromToProfileCli {
-                    to: "abcd".to_owned(),
-                    from: "dcba".to_owned()
-                })
-            }
-        );
+        assert_eq!(Cli::parse_from(["test", "--to", "abcd", "--from", "dcba", "move-pkgs"]), Cli {
+            profile: None,
+            to: Some("abcd".to_owned()),
+            from: Some("dcba".to_owned()),
+            command: Commands::MovePkgs(FromToProfileCli {
+                to: "abcd".to_owned(),
+                from: "dcba".to_owned()
+            })
+        });
     }
 }
